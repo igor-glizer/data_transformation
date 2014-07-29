@@ -24,6 +24,6 @@ object ElementExtractor {
     }
 
     splitPartialElementsBySplitChar.foldLeft(ElementsAccumulator())(
-      (accumulatorForFields, partialElement) => accumulatorForFields.accumulate(partialElement)).elements
+      (accumulatorForFields, partialElement) => accumulatorForFields.accumulate(partialElement)).elements.filterNot(_.isEmpty)
   }
 }
