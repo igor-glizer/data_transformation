@@ -7,8 +7,7 @@ import org.joda.time.format.DateTimeFormat
  * Created by Igor_Glizer on 7/29/14.
  */
 object LogParser {
-  case class Request(host : String, idnet : String, authuser : String, date : DateTime,
-                     request : String, status : Int, bytes : Int, url : Option[String], userAgent : String)
+
   def parse(lines : List[String]) : List[Request] = {
     val dateStringFormat = DateTimeFormat.forPattern("[dd/MMM/yyyy:HH:mm:ss")
     var i = 0
