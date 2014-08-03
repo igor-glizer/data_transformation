@@ -1,37 +1,47 @@
 package com.example
+
 import org.joda.time._
 import com.netaporter.uri.Uri
 import org.joda.time.format.DateTimeFormat
+
+import scala.util.{Try, Success, Failure}
 
 /**
  * Created by Igor_Glizer on 7/29/14.
  */
 object LogParser {
 
-  def parse(lines : List[String]) : List[Request] = {
-    val dateStringFormat = DateTimeFormat.forPattern("[dd/MMM/yyyy:HH:mm:ss")
-    var i = 0
-    List.fill(lines.length) {
-        val elements = ElementExtractor.elements(lines(i), ' ')
-        i = i + 1
-        val host = elements(0)
-        val idnet = elements(1)
-        val authuser = elements(2)
-        val date = dateStringFormat.parseDateTime(elements(3))
-        val request = stripElement(elements(5))
-        val status = elements(6).toInt
-        val bytes = elements(7).toInt
-        val url = elements(8) match {
-          case """""_"""" => None
-          case _ => Some(stripElement(elements(8)))
-        }
-        val userAgent = stripElement(elements(9))
-
-        Request(host, idnet, authuser, date, request, status, bytes, url, userAgent)
-      }
+  def parse(lines: List[String]): List[Request] = {
+    lines collect {
+      case ExtractedLine(host :: idnet :: authuser :: ParsedDate(date) :: _ :: ParsedUrl(path) :: status :: bytes :: referrer :: userAgent) =>
+        Request(host, idnet, authuser, date, path, status.toInt, bytes.toInt, stripElement(userAgent.head))
     }
 
-  private def stripElement(element : String) = {
+  }
+
+  object ParsedDate {
+    def unapply(dateString: String): Option[DateTime] =
+      Try(DateTimeFormat.forPattern("[dd/MMM/yyyy:HH:mm:ss").parseDateTime(dateString)) match {
+        case Success(date) => Some(date)
+        case Failure(_) => None
+      }
+  }
+
+  object ParsedUrl {
+    def unapply(requestString: String) = {
+      val _ :: pathString :: _ = ElementExtractor.elements(stripElement(requestString), ' ')
+      Try(Uri.parse(pathString)) match {
+        case Success(path) => Some(path)
+        case Failure(_) => None
+      }
+    }
+  }
+
+  object ExtractedLine {
+    def unapply(line: String) = Some(ElementExtractor.elements(line, ' '))
+  }
+
+  private def stripElement(element: String) = {
     element.tail.init
   }
 }
